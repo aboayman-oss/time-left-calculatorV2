@@ -1,7 +1,6 @@
 
-import { animateText, showError, updateBar, formatTime } from './utils.js';
+import { animateText, showError, updateBar, formatHM } from './utils.js';
 
-let liveInterval = null;
 let targetTime = null;
 
 export function startCalculation() {
@@ -15,7 +14,6 @@ export function startCalculation() {
   document.getElementById('course-block').style.display = 'block';
 
   updateCountdown();
-  if (liveInterval) clearInterval(liveInterval);
 }
 
 export function updateCountdown() {
@@ -29,37 +27,25 @@ export function updateCountdown() {
   const course = parseFloat(document.getElementById('courseHours').value) || 0;
   const speed = parseFloat(document.getElementById('speed').value);
   const courseMs = (course / speed) * 3600000;
+  const savedMs = course * 3600000 - courseMs;
 
   const finalMs = remaining - sleepMs - courseMs;
 
   updateBar("sleepBar", sleepMs / remaining);
   updateBar("courseBar", courseMs / remaining);
 
-  animateText(document.getElementById("countdown"), `⏰ ${formatTime(finalMs)} left`);
+  animateText(document.getElementById("countdown"), `⏰ ${formatHM(finalMs)} left`);
 
   document.getElementById("summary").innerHTML = `
-    <p><strong>Original:</strong> ${formatTime(remaining)}</p>
-    <p><strong>– Sleep (${sleep}h/day):</strong> ${formatTime(sleepMs)}</p>
-    <p><strong>– Courses (${course}h @ ${speed}x):</strong> ${formatTime(courseMs)}</p>
-    <p><strong>= Final:</strong> ${formatTime(finalMs)}</p>
+    <p><strong>Original:</strong> ${formatHM(remaining)}</p>
+    <p><strong>– Sleep (${sleep}h/day):</strong> ${formatHM(sleepMs)}</p>
+    <p><strong>– Courses (${course}h @ ${speed}x):</strong> ${formatHM(courseMs)}</p>
+    <p><strong>= Final:</strong> ${formatHM(finalMs)}</p>
   `;
 
-  const saved = Math.round((course * (1 - 1 / speed)) * 60);
   const badge = document.getElementById('badge');
-  badge.innerText = `You saved ${saved} min today!`;
-  badge.style.display = saved > 0 ? 'inline-block' : 'none';
-}
-
-export function toggleLive() {
-  if (!targetTime) return;
-  if (liveInterval) {
-    clearInterval(liveInterval);
-    liveInterval = null;
-    animateText(document.getElementById('countdown'), '⏳ Live stopped.');
-  } else {
-    updateCountdown();
-    liveInterval = setInterval(updateCountdown, 1000);
-  }
+  badge.innerText = savedMs > 0 ? `You saved ${formatHM(savedMs)} by watching faster!` : '';
+  badge.style.display = savedMs > 0 ? 'inline-block' : 'none';
 }
 
 export function resetApp() {
@@ -73,6 +59,4 @@ export function resetApp() {
   document.getElementById('courseBar').style.width = '0';
   document.getElementById('badge').style.display = 'none';
   animateText(document.getElementById('countdown'), '⏳');
-  clearInterval(liveInterval);
-  liveInterval = null;
 }
